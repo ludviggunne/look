@@ -3,6 +3,7 @@ CFLAGS=-std=c++17 -Wall -Wextra -Wpedantic -MMD
 INCLUDE=-Iinclude
 SRC=$(wildcard src/*.cc)
 OBJ=$(SRC:src/%.cc=build/%.o)
+EXE=look
 
 TEST_SRC=$(wildcard tests/*.cc)
 TEST_OBJS_=$(TEST_SRC:tests/%.c=build/%.o)
@@ -14,7 +15,7 @@ TEST_OBJS=$(filter-out build/main.o,$(TEST_OBJS_))
 
 #-include $(OBJ:.o=.d)
 
-build/search: $(OBJ)
+build/$(EXE): $(OBJ)
 	@echo "Linking $@"
 	@mkdir -p build
 	@$(CXX) $(OBJ) -o $@

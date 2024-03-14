@@ -71,6 +71,7 @@ void search() {
         }
     }
 
+    std::cout << "ready\n" << std::flush;
     while (true)
     {
         std::string query;

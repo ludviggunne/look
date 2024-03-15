@@ -3,7 +3,7 @@
 
 std::optional<std::string> Tokenizer::next()
 {
-    while (!(std::isalpha(*_cursor) || *_cursor == '_'))
+    while (!std::isalpha(*_cursor))
     {
         _cursor++;
         if (_cursor == _end)
@@ -14,8 +14,7 @@ std::optional<std::string> Tokenizer::next()
 
     auto start = _cursor;
 
-    while (_cursor != _end &&
-           (std::isalpha(*_cursor) || *_cursor == '_'))
+    while (_cursor != _end && std::isalpha(*_cursor))
     {
         _cursor++;
     }

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "walkdir.h"
 #include "Indexer.h"
+#include "Trie.h"
 
 void index(const char *root)
 {
@@ -48,8 +49,7 @@ void search() {
         files.push_back(line);
     }
 
-    std::unordered_map<std::string,
-        std::unordered_map<std::size_t, unsigned short>> freqs;
+    Trie<std::unordered_map<std::size_t, unsigned short>> freqs;
 
     while (std::getline(ifs, line))
     {
@@ -60,13 +60,15 @@ void search() {
 
         ss >> token;
 
+        auto *t = freqs.find_or_reserve(token);
+
         while (ss >> file_id)
         {
             ss >> freq;
 
             if (freq > 0)
             {
-                freqs[token][file_id] = freq;
+                (*t)[file_id] = freq;
             }
         }
     }
@@ -85,13 +87,21 @@ void search() {
             [](unsigned char c){ return std::tolower(c); });
 
         std::vector<std::pair<std::size_t, unsigned short>> results;
+        auto it = freqs.prefix_iterator(query);
 
-        if (freqs.find(query) != freqs.end())
+        if (it)
         {
-            for (auto &f: freqs[query])
+            auto *t = it.value().next();
+            while (t)
             {
-                results.push_back(std::make_pair(f.second, f.first));
+                for (auto &f: *t)
+                {
+                    results.push_back(std::make_pair(f.second, f.first));
+                }
+
+                t = it.value().next();
             }
+
             std::sort(results.begin(), results.end(), std::greater<>());
             std::cout << results.size() << std::endl;
             for (auto &r: results)

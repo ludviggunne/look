@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <cstring>
 #include <algorithm>
+#include <unordered_set>
 #include "walkdir.h"
 #include "Indexer.h"
 #include "Trie.h"
@@ -94,6 +95,8 @@ void single(std::string query, const Data &data)
         [](unsigned char c){ return std::tolower(c); });
 
     std::vector<std::pair<std::size_t, unsigned short>> results;
+    std::unordered_set<std::size_t> added_files;
+
     auto it = data.index->prefix_iterator(query);
 
     if (it)
@@ -103,7 +106,12 @@ void single(std::string query, const Data &data)
         {
             for (auto &f: *t)
             {
+                if (added_files.find(f.first) != added_files.end())
+                {
+                    continue;
+                }
                 results.push_back(std::make_pair(f.second, f.first));
+                added_files.insert(f.first);
             }
 
             t = it.value().next();

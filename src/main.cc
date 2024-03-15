@@ -33,7 +33,19 @@ void index(const char *root)
     indexer.emit(ofs, sb);
 }
 
-void search() {
+struct Data {
+    std::unique_ptr<Trie<std::unordered_map<std::size_t, unsigned short>>> index;
+    std::vector<std::string> files;
+};
+
+Data load_data()
+{
+    if (!std::filesystem::exists("index.txt"))
+    {
+        std::cout << "No index.txt found: run ./look index <root>" << std::endl;
+        std::exit(1);
+    }
+
     std::ifstream ifs("index.txt");
     std::string line;
 
@@ -49,7 +61,7 @@ void search() {
         files.push_back(line);
     }
 
-    Trie<std::unordered_map<std::size_t, unsigned short>> freqs;
+    auto index = std::make_unique<Trie<std::unordered_map<std::size_t, unsigned short>>>();
 
     while (std::getline(ifs, line))
     {
@@ -60,7 +72,7 @@ void search() {
 
         ss >> token;
 
-        auto *t = freqs.find_or_reserve(token);
+        auto *t = index->find_or_reserve(token);
 
         while (ss >> file_id)
         {
@@ -73,6 +85,45 @@ void search() {
         }
     }
 
+    return { std::move(index), std::move(files) };
+}
+
+void single(std::string query, const Data &data)
+{
+    std::transform(query.begin(), query.end(), query.begin(),
+        [](unsigned char c){ return std::tolower(c); });
+
+    std::vector<std::pair<std::size_t, unsigned short>> results;
+    auto it = data.index->prefix_iterator(query);
+
+    if (it)
+    {
+        auto *t = it.value().next();
+        while (t)
+        {
+            for (auto &f: *t)
+            {
+                results.push_back(std::make_pair(f.second, f.first));
+            }
+
+            t = it.value().next();
+        }
+
+        std::sort(results.begin(), results.end(), std::greater<>());
+        std::cout << results.size() << std::endl;
+        for (auto &r: results)
+        {
+            std::cout << data.files[r.second] << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "0" << std::endl;
+    }
+}
+
+void server(const Data &data) {
+
     std::cout << "ready\n" << std::flush;
     while (true)
     {
@@ -83,36 +134,7 @@ void search() {
             break;
         }
 
-        std::transform(query.begin(), query.end(), query.begin(),
-            [](unsigned char c){ return std::tolower(c); });
-
-        std::vector<std::pair<std::size_t, unsigned short>> results;
-        auto it = freqs.prefix_iterator(query);
-
-        if (it)
-        {
-            auto *t = it.value().next();
-            while (t)
-            {
-                for (auto &f: *t)
-                {
-                    results.push_back(std::make_pair(f.second, f.first));
-                }
-
-                t = it.value().next();
-            }
-
-            std::sort(results.begin(), results.end(), std::greater<>());
-            std::cout << results.size() << std::endl;
-            for (auto &r: results)
-            {
-                std::cout << files[r.second] << std::endl;
-            }
-        }
-        else
-        {
-            std::cout << "0" << std::endl;
-        }
+        single(query, data);
     }
 }
 
@@ -122,15 +144,8 @@ int main(int argc, char *argv[])
 
     if (argc < 2)
     {
-        if (std::filesystem::exists("index.txt"))
-        {
-            search();
-        }
-        else
-        {
-            std::cout << "ERROR: No index.txt found\n" << std::endl;
-            std::exit(1);
-        }
+        auto data = load_data();
+        server(data);
     }
     else
     {
@@ -143,9 +158,19 @@ int main(int argc, char *argv[])
             }
             index(argv[2]);
         }
+        else if (strcmp(argv[1], "-q") == 0)
+        {
+            if (argc < 3)
+            {
+                std::cout << "ERROR: Missing single query\n" << std::endl;
+                std::exit(1);
+            }
+            auto data = load_data();
+            single(argv[2], data);
+        }
         else
         {
-            std::cout << "ERROR: Invalid argument " << argv[1] << "\n" << std::endl;
+            std::cout << "ERROR: Unknown command: " << argv[1] << std::endl;
             std::exit(1);
         }
     }

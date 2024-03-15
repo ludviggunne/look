@@ -11,5 +11,8 @@ Start the server:
 ```bash
 look
 ```
-The server reads queries from standard input and writes a list of matching files, in
-order of relevance, to standard output. The list is prefixed by the number of matched files.
+Or run a single query:
+```bash
+look -q <query>
+```
+Output is one line with the number of matches, followed by the matching files.

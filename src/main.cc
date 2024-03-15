@@ -157,16 +157,21 @@ int main(int argc, char *argv[])
     }
     else
     {
-        if (strcmp(argv[1], "index") == 0)
+        if (strcmp(argv[1], "--index") == 0 || strcmp(argv[1], "-i") == 0)
         {
             if (argc < 3)
             {
                 std::cout << "ERROR: Missing root directory\n" << std::endl;
                 std::exit(1);
             }
+            if (!std::filesystem::exists(argv[2]))
+            {
+                std::cout << "ERROR: Root directory not found: " << argv[2] << std::endl;
+                std::exit(1);
+            }
             index(argv[2]);
         }
-        else if (strcmp(argv[1], "-q") == 0)
+        else if (strcmp(argv[1], "--query") == 0 || strcmp(argv[1], "-q") == 0)
         {
             if (argc < 3)
             {

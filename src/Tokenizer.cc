@@ -3,6 +3,11 @@
 
 std::optional<std::string> Tokenizer::next()
 {
+    if (_cursor == _end)
+    {
+        return std::nullopt;
+    }
+
     while (!std::isalpha(*_cursor))
     {
         _cursor++;
